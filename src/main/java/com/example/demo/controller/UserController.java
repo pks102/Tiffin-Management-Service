@@ -3,16 +3,11 @@ package com.example.demo.controller;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,15 +19,18 @@ import org.springframework.web.servlet.ModelAndView;
 import com.example.demo.model.User;
 import com.example.demo.model.UserType;
 import com.example.demo.model.VendorItem;
+import com.example.demo.repository.JwtTokenRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserTypeRepository;
 import com.example.demo.repository.VendorItemRepository;
 import com.example.demo.security.JwtProvider;
-import com.example.demo.service.UserPrinciple;
+import com.example.demo.security.JwtResponse;
 import com.example.demo.service.UserService;
 
 @RestController
 public class UserController {
+	@Autowired
+	JwtResponse jwtResponse;
 	@Autowired
 	AuthenticationManager authenticationManager;
 	@Autowired
@@ -45,6 +43,8 @@ public class UserController {
 	UserRepository userRepository;
 	@Autowired
 	JwtProvider jwtProvider;
+	@Autowired
+	JwtTokenRepository tokenRepo;
 
 	/**
 	 * @return
@@ -70,37 +70,10 @@ public class UserController {
 	 * @return
 	 */
 	@PostMapping("/signin")
-	public ModelAndView authenticateUser(@RequestParam("userName") String userName,
+	public ModelAndView authenticateUser(@RequestParam("username") String userName,
 			@RequestParam("password") String password) {
 		ModelAndView mv = null;
-		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-				userName, password);
-		System.out.println("--------------" + usernamePasswordAuthenticationToken);
-		Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-		System.out.print(authentication);
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-		String jwt = jwtProvider.generateJwtToken(authentication);
-		System.out.println(jwt);
-		if (authentication.isAuthenticated()) {
-			UserPrinciple user1 = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-			Iterator<? extends GrantedAuthority> iterator = user1.getAuthorities().iterator();
-			while (iterator.hasNext()) {
-				GrantedAuthority grantedAuthority = iterator.next();
-				System.out.println(grantedAuthority.getAuthority());
-				if (grantedAuthority.getAuthority().equals("ROLE_customer")) {
-
-					mv = new ModelAndView("welcomeCustomer");
-					mv.addObject("user", user1);
-
-				} else if (grantedAuthority.getAuthority().equals("ROLE_vendor")) {
-
-					mv = new ModelAndView("welcomeVendor");
-					mv.addObject("user", user1);
-				}
-			}
-		} else {
-			mv = new ModelAndView("errorPage");
-		}
+		mv=userService.signInVerify(userName,password);
 		return mv;
 
 	}
@@ -141,7 +114,7 @@ public class UserController {
 	 * @param userId
 	 * @return
 	 */
-	@PostMapping("/editUser")
+	@GetMapping("/editUser")
 	public ModelAndView edit(@RequestParam("userId") int userId) {
 		ModelAndView mv = null;
 		mv = userService.edit(userId);

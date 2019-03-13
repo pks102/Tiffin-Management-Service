@@ -26,7 +26,6 @@
 </th>
 </tr>
 </m:forEach>
-
 </table>
 <form action="/viewOrder" method="post">
 <input type="submit" value="viewOrder">

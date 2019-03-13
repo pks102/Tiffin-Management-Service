@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.Email;
@@ -60,6 +61,16 @@ public class User{
 
 	@Size(min = 6)
 	private String password;
+	@OneToOne
+	private Token token;
+
+	public Token getToken() {
+		return token;
+	}
+
+	public void setToken(Token token) {
+		this.token = token;
+	}
 
 	public String getName() {
 		return name;
@@ -88,13 +99,16 @@ public class User{
         this.password = users.getPassword();
         this.address = users.getAddress();
         this.contactNo = users.getContactNo();
+        this.token=users.getToken();
         }
+
+	
 
 	@Override
 	public String toString() {
 		return "User [userId=" + userId + ", userType=" + userType + ", createdDate=" + createdDate + ", updatedDate="
 				+ updatedDate + ", emailId=" + emailId + ", contactNo=" + contactNo + ", address=" + address + ", name="
-				+ name + ", userName=" + userName + ", password=" + password + "]";
+				+ name + ", userName=" + userName + ", password=" + password + ", token=" + token + "]";
 	}
 
 	public void setName(String name) {

@@ -17,7 +17,7 @@
 
 				<th>Enter your User name</th>
 
-				<td><input type="text" name="userName" title="enter your Username"
+				<td><input type="text" name="username" title="enter your Username"
 					placeholder="enter your Username" required /></td>
 
 			</tr>

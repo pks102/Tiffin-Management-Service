@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.example.demo.model.Token;
+import com.example.demo.repository.JwtTokenRepository;
 import com.example.demo.service.UserDetailsServiceImpl;
 
 /*In JwtAuthTokenFilter class, the doFilterInternal method will do:
@@ -26,6 +28,11 @@ import com.example.demo.service.UserDetailsServiceImpl;
 5. set the authentication object to Security Context*/
 public class JwtAuthTokenFilter extends OncePerRequestFilter {
 
+	/*
+	 * @Bean public JwtResponse jwtResponse() { return new JwtResponse(); }
+	 */
+	@Autowired
+	JwtTokenRepository tokenRepo;
     @Autowired
     private JwtProvider tokenProvider;
 
@@ -41,28 +48,31 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
     										throws ServletException, IOException {
         try {
         	
-            String jwt = getJwt(request);
+            String jwt = getJwt();
             if (jwt!=null && tokenProvider.validateJwtToken(jwt)) {
                 String username = tokenProvider.getUserNameFromJwtToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication 
                 		= new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
+               
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
             logger.error("Can NOT set user authentication -> Message: {}", e);
         }
-
+       
         filterChain.doFilter(request, response);
     }
 
-    private String getJwt(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        	
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        	return authHeader.replace("Bearer ","");
+    private String getJwt() {
+    	Token token=new Token();
+       token=tokenRepo.findById(72).get();
+    	String authHeader = token.getJwtToken();
+    	System.out.println(authHeader);
+      
+        if (authHeader != null ) {
+        	return authHeader;
         }
         return null;
     }

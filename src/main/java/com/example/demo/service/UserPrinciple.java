@@ -32,7 +32,7 @@ public class UserPrinciple extends User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return super.getName();
+        return super.getUserName();
     }
 
     @Override
