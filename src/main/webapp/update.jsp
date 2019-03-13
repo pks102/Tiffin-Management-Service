@@ -30,6 +30,13 @@
 			</tr>
 			<tr>
 
+				<th>Enter your Password</th>
+
+				<td><form:input path="password" /></td>
+
+			</tr>
+			<tr>
+
 				<th>Enter your email</th>
 
 				<td><form:input path="emailId" /></td>

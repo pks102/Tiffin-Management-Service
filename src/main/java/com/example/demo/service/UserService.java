@@ -50,6 +50,7 @@ public class UserService {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtProvider.generateJwtToken(authentication);
 		User user = userRepository.findByUserName(userName);
+		
 		Token token = new Token();
 		if (user.getToken() != null) {
 			int tokenId = user.getToken().getTokenId();
@@ -59,6 +60,8 @@ public class UserService {
 
 			user.setToken(token);
 			userRepository.save(user);
+			
+			
 		} else {
 
 			token.setJwtToken(jwt);
@@ -66,6 +69,7 @@ public class UserService {
 
 			user.setToken(token);
 			userRepository.save(user);
+			
 		}
 		if (authentication.isAuthenticated()) {
 			UserPrinciple user1 = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -88,6 +92,27 @@ public class UserService {
 		}
 
 		return mv;
+	}
+	
+	public ModelAndView registerUserImpl(User signUpRequest, String userTypeName) {
+		if (userTypeName.equals("customer")) {
+			UserType userType = userTypeRepository.findByUserTypeName("customer");
+			userType.setUserTypeId(userType.getUserTypeId());
+			List<UserType> userTypes = new ArrayList<>();
+			userTypes.add(userType);
+			signUpRequest.setUserType(userTypes);
+			System.out.println("-------" + signUpRequest);
+			
+
+		} else if (userTypeName.equalsIgnoreCase("vendor")) {
+			UserType userType = userTypeRepository.findByUserTypeName("vendor");
+			userType.setUserTypeId(userType.getUserTypeId());
+			List<UserType> userTypes = new ArrayList<>();
+			userTypes.add(userType);
+			signUpRequest.setUserType(userTypes);
+			
+		}
+		return new ModelAndView("loginpage");
 	}
 
 	public void addCustomer(User user) {
@@ -251,5 +276,9 @@ public class UserService {
 		ModelAndView mv = new ModelAndView("displayCart", "vendorItem", vendorItem);
 		return mv;
 	}
+
+
+
+
 
 }

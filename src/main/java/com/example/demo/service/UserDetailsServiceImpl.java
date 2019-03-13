@@ -26,7 +26,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     	}else {
          new UsernameNotFoundException("User Not Found with -> username or email : " + username);
     	}
-        System.out.println("------------inusersdetailsserviceimpl"+user);
         return new UserPrinciple(user);
         }
 }

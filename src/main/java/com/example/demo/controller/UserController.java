@@ -2,8 +2,6 @@
 package com.example.demo.controller;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,20 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.example.demo.model.User;
-import com.example.demo.model.UserType;
 import com.example.demo.model.VendorItem;
 import com.example.demo.repository.JwtTokenRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserTypeRepository;
 import com.example.demo.repository.VendorItemRepository;
 import com.example.demo.security.JwtProvider;
-import com.example.demo.security.JwtResponse;
 import com.example.demo.service.UserService;
 
 @RestController
 public class UserController {
-	@Autowired
-	JwtResponse jwtResponse;
 	@Autowired
 	AuthenticationManager authenticationManager;
 	@Autowired
@@ -86,35 +80,16 @@ public class UserController {
 	@PostMapping("/signup")
 	public ModelAndView registerUser(@ModelAttribute("user") User signUpRequest,
 			@RequestParam("utype") String userTypeName) {
-		// Creating user's account
-		System.out.println(signUpRequest + "---------------");
-		System.out.println(userTypeName + "---------------");
-
-		if (userTypeName.equals("customer")) {
-			UserType userType = userTypeRepository.findByUserTypeName("customer");
-			userType.setUserTypeId(userType.getUserTypeId());
-			List<UserType> userTypes = new ArrayList<>();
-			userTypes.add(userType);
-			signUpRequest.setUserType(userTypes);
-			System.out.println("-------" + signUpRequest);
-			userService.addCustomer(signUpRequest);
-
-		} else if (userTypeName.equalsIgnoreCase("vendor")) {
-			UserType userType = userTypeRepository.findByUserTypeName("vendor");
-			userType.setUserTypeId(userType.getUserTypeId());
-			List<UserType> userTypes = new ArrayList<>();
-			userTypes.add(userType);
-			signUpRequest.setUserType(userTypes);
-			userService.addVendor(signUpRequest);
-		}
-		return new ModelAndView("loginpage");
+		
+ModelAndView mv=userService.registerUserImpl(signUpRequest,userTypeName);
+		return mv;
 	}
 
 	/**
 	 * @param userId
 	 * @return
 	 */
-	@GetMapping("/editUser")
+	@PostMapping("/editUser")
 	public ModelAndView edit(@RequestParam("userId") int userId) {
 		ModelAndView mv = null;
 		mv = userService.edit(userId);
