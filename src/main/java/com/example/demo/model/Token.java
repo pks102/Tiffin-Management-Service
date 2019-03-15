@@ -4,14 +4,28 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+
 @Entity
 public class Token {
 
   
 
+	public Token() {
+		super();
+	}
+
+
+
+	public Token(String jwtToken) {
+		super();
+		this.jwtToken = jwtToken;
+	}
+
+
+
 	@Override
 	public String toString() {
-		return "Token [tokenId=" + tokenId + ", jwtToken=" + jwtToken + "]";
+		return "Token [ jwtToken=" + jwtToken + "]";
 	}
 
 	

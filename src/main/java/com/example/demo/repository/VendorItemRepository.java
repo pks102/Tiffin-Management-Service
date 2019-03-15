@@ -9,5 +9,6 @@ import com.example.demo.model.VendorItem;
 public interface VendorItemRepository extends CrudRepository<VendorItem, Integer> {
 
 	List<VendorItem> findByUserUserId(int userId);
+	VendorItem findByUserUserIdAndItemName(int userId,String itemName);
 	
 }

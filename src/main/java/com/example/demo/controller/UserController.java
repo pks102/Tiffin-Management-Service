@@ -1,19 +1,24 @@
 
 package com.example.demo.controller;
 
-import java.math.BigDecimal;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.example.demo.model.LoginForm;
 import com.example.demo.model.User;
 import com.example.demo.model.VendorItem;
 import com.example.demo.repository.JwtTokenRepository;
@@ -40,36 +45,15 @@ public class UserController {
 	@Autowired
 	JwtTokenRepository tokenRepo;
 
+	
 	/**
-	 * @return
-	 */
-	@RequestMapping("/home")
-	public ModelAndView home() {
-		ModelAndView mv = new ModelAndView("registerUser");
-		return mv;
-	}
-
-	/**
-	 * @return
-	 */
-	@GetMapping("/loginpage")
-	public ModelAndView login() {
-		ModelAndView mv = new ModelAndView("loginpage");
-		return mv;
-	}
-
-	/**
-	 * @param userName
-	 * @param password
+	 * @param loginRequest
 	 * @return
 	 */
 	@PostMapping("/signin")
-	public ModelAndView authenticateUser(@RequestParam("username") String userName,
-			@RequestParam("password") String password) {
-		ModelAndView mv = null;
-		mv=userService.signInVerify(userName,password);
-		return mv;
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginForm loginRequest) {
 
+		return userService.signInVerify(loginRequest);
 	}
 
 	/**
@@ -77,133 +61,67 @@ public class UserController {
 	 * @param userTypeName
 	 * @return
 	 */
-	@PostMapping("/signup")
-	public ModelAndView registerUser(@ModelAttribute("user") User signUpRequest,
-			@RequestParam("utype") String userTypeName) {
-		
-ModelAndView mv=userService.registerUserImpl(signUpRequest,userTypeName);
-		return mv;
+	@PostMapping("/signup/{userType}")
+	public void registerUser(@RequestBody User signUpRequest, @PathVariable("userType") String userTypeName) {
+
+		userService.registerUserImpl(signUpRequest, userTypeName);
 	}
 
 	/**
 	 * @param userId
 	 * @return
 	 */
-	@PostMapping("/editUser")
-	public ModelAndView edit(@RequestParam("userId") int userId) {
-		ModelAndView mv = null;
-		mv = userService.edit(userId);
-		System.out.println("in edit controller");
-		return mv;
+	@PutMapping("/editUser")
+	public ResponseEntity<?> updateUser(
+			@RequestBody User user,HttpServletRequest request) {
+
+		return userService.updateImpl(user,request);
 
 	}
 
 	/**
 	 * @return
 	 */
-	@PostMapping("/showVendors") // to show all the vendors
-	public ModelAndView showVendors() {
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@GetMapping("/showVendors") // to show all the vendors
+	public ResponseEntity<?> showVendors() {
 		System.out.println("in show vendor controller");
-		ModelAndView mv = userService.ListOfVendors();
-		return mv;
+		return userService.ListOfVendors();
 	}
 
+	
 	/**
 	 * @param userId
 	 * @return
 	 */
-	@PostMapping("/showVendorItems") // show items to Customer
-	public ModelAndView showVendorItem(@RequestParam("userId") int userId) {
-		System.out.println("in show vendor controller");
-		ModelAndView mv = userService.showVendorItems(userId);
-		return mv;
-	}
-	@PostMapping("/addToCart") // show items to Customer
-	public ModelAndView addToCart(@RequestParam("vendorId") int userId,@RequestParam("vendorItemId") int vendorItemId) {
-		System.out.println("in addto cart controller"+userId);
-		ModelAndView mv = userService.addToCartImpl(userId,vendorItemId);
-		return mv;
+	@GetMapping("/showVendorItems/{userId}") // show items to Customer
+	public ResponseEntity<?> showVendorItem(@PathVariable("userId") int userId) {
+		System.out.println("in show vendor Items controller");
+		return userService.showVendorItems(userId);
 	}
 	
-	@PostMapping("viewCart")
-public ModelAndView viewCart(@RequestParam("cart")int vendorItemId) {
-		ModelAndView mv = userService.viewCartImpl(vendorItemId);
-		return mv;
-	}
 	/**
-	 * @param userId
-	 * @return
-	 */
-	@PostMapping("/changePassword")
-	public ModelAndView changePassword(@RequestParam("userId") int userId) {
-		ModelAndView mv = null;
-		mv = userService.editPassword(userId);
-		System.out.println("in change password controller");
-		return mv;
-
-	}
-
-	/**
-	 * @param userId
-	 * @param newPassword
-	 * @param confirmPassword
-	 * @return
-	 */
-	@PostMapping("/updatePassword")
-	public ModelAndView updatePassword(@RequestParam("userId") int userId,
-			@RequestParam("newPassword") String newPassword, @RequestParam("confirmPassword") String confirmPassword) {
-		ModelAndView mv = null;
-		mv = userService.updatePassword(userId, newPassword, confirmPassword);
-		System.out.println("after update");
-		return mv;
-	}
-
-	/**
-	 * @param user
-	 * @return
-	 */
-	@PostMapping("/updateUser")
-	public ModelAndView update(User user) {
-		ModelAndView mv = null;
-		mv = userService.update(user);
-		return mv;
-	}
-
-	/**
-	 * @param userId
-	 * @return
-	 */
-	@PostMapping("/item")
-	public ModelAndView item(@RequestParam("userId") int userId) {
-		User user = new User();
-		user.setUserId(userId);
-		ModelAndView mv = new ModelAndView("addItem", "user", user);
-		return mv;
-	}
-
-	/**
-	 * @param itemName
-	 * @param price
-	 * @param userId
-	 * @return
-	 */
-	@PostMapping("/addItem")
-	public ModelAndView add(@RequestParam("itemName") String itemName, @RequestParam("price") BigDecimal price,
-			@RequestParam("userId") int userId) {
-		ModelAndView mv = null;
-		mv = userService.addItem(itemName, price, userId);
-		return mv;
-	}
-
-	/**
+	 * @param vendorItem
 	 * @param userId
 	 * @return
 	 */
 	@PreAuthorize("hasRole('ROLE_vendor')")
-	@PostMapping("/viewItems")
-	public ModelAndView viewItem(@RequestParam("userId") int userId) {
-		System.out.println("in view item");
-		ModelAndView mv = userService.viewItems(userId);
+	@PostMapping("/addItem")
+	public ResponseEntity<?> addItem(@RequestBody VendorItem vendorItem,HttpServletRequest request) {
+	return	userService.addItemImpl(vendorItem,request);
+		
+	}
+	
+	/**
+	 * @param userId
+	 * @param vendorItemId
+	 * @return
+	 */
+	@PostMapping("/addToCart") // show items to Customer
+	public ModelAndView addToCart(@RequestParam("vendorId") int userId,
+			@RequestParam("vendorItemId") int vendorItemId) {
+		System.out.println("in addto cart controller" + userId);
+		ModelAndView mv = userService.addToCartImpl(userId, vendorItemId);
 		return mv;
 	}
 
@@ -211,44 +129,38 @@ public ModelAndView viewCart(@RequestParam("cart")int vendorItemId) {
 	 * @param vendorItemId
 	 * @return
 	 */
-	@PostMapping("/editItem")
-	public ModelAndView editItem(@RequestParam("vendorItemId") int vendorItemId) {
-		ModelAndView mv = null;
-		mv = userService.editItem(vendorItemId);
+	@PostMapping("viewCart")
+	public ModelAndView viewCart(@RequestParam("cart") int vendorItemId) {
+		ModelAndView mv = userService.viewCartImpl(vendorItemId);
 		return mv;
-
 	}
 
+
 	/**
+	 * @param vendorId
+	 * @param itemName
 	 * @param vendorItem
 	 * @return
 	 */
-	@PostMapping("/updateItem")
-	public ModelAndView updateItem(VendorItem vendorItem) {
+	@PreAuthorize("hasRole('ROLE_vendor')")
+	@PutMapping("/editItem/{itemName}")
+	public ResponseEntity<?> editItem(@PathVariable("itemName")String itemName,@RequestBody VendorItem vendorItem,HttpServletRequest request) {
+		return userService.editItem(itemName,vendorItem,request);
 
-		ModelAndView mv = null;
-		mv = userService.updateItem(vendorItem);
-		return mv;
 	}
 
+	
 	/**
 	 * @param vendorItemId
+	 * @param itemName
 	 * @return
 	 */
-	@PostMapping("/deleteItem")
-	public ModelAndView deleteItem(@RequestParam("vendorItemId") int vendorItemId) {
-		ModelAndView mv = null;
-		mv = userService.deleteItems(vendorItemId);
-		return mv;
+	@PreAuthorize("hasRole('ROLE_vendor')")
+	@DeleteMapping("/deleteItem/{itemName}")
+	public ResponseEntity<?> deleteItem(@PathVariable("itemName")String itemName,HttpServletRequest request) {
+		return userService.deleteItems(itemName, request);
 
 	}
 
-	/**
-	 * @return
-	 */
-	@GetMapping("/errorPage")
-	public ModelAndView error() {
-		return new ModelAndView("errorPage");
-	}
 
 }

@@ -1,20 +1,21 @@
 package com.example.demo.service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.example.demo.model.LoginForm;
 import com.example.demo.model.Token;
 import com.example.demo.model.User;
 import com.example.demo.model.UserType;
@@ -42,67 +43,49 @@ public class UserService {
 	@Autowired
 	private PasswordEncoder encoder;
 
-	public ModelAndView signInVerify(String userName, String password) {
-		ModelAndView mv = null;
-		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-				userName, password);
-		Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+	public ResponseEntity<?> signInVerify(LoginForm loginRequest) {
+
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword()));
+
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+
 		String jwt = jwtProvider.generateJwtToken(authentication);
-		User user = userRepository.findByUserName(userName);
-		
+
+		User user1 = userRepository.findByUserName(loginRequest.getUserName());
+
 		Token token = new Token();
-		if (user.getToken() != null) {
-			int tokenId = user.getToken().getTokenId();
+		if (user1.getToken() != null) {
+			int tokenId = user1.getToken().getTokenId();
 			token = tokenRepo.findById(tokenId).get();
 			token.setJwtToken(jwt);
 			tokenRepo.save(token);
 
-			user.setToken(token);
-			userRepository.save(user);
-			
-			
-		} else {
+			user1.setToken(token);
+			userRepository.save(user1);
+			System.out.println("token-----------------------" + token);
 
+		} else {
 			token.setJwtToken(jwt);
 			tokenRepo.save(token);
-
-			user.setToken(token);
-			userRepository.save(user);
-			
+			user1.setToken(token);
+			userRepository.save(user1);
+			System.out.println("token  else-----------------------" + token);
 		}
-		if (authentication.isAuthenticated()) {
-			UserPrinciple user1 = (UserPrinciple) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-			Iterator<? extends GrantedAuthority> iterator = user1.getAuthorities().iterator();
-			while (iterator.hasNext()) {
-				GrantedAuthority grantedAuthority = iterator.next();
-				if (grantedAuthority.getAuthority().equals("ROLE_customer")) {
-
-					mv = new ModelAndView("welcomeCustomer");
-					mv.addObject("user", user1);
-
-				} else if (grantedAuthority.getAuthority().equals("ROLE_vendor")) {
-
-					mv = new ModelAndView("welcomeVendor");
-					mv.addObject("user", user1);
-				}
-			}
-		} else {
-			mv = new ModelAndView("errorPage");
-		}
-
-		return mv;
+		return ResponseEntity.ok(new Token(jwt));
 	}
-	
-	public ModelAndView registerUserImpl(User signUpRequest, String userTypeName) {
+
+	public void registerUserImpl(User signUpRequest, String userTypeName) {
 		if (userTypeName.equals("customer")) {
 			UserType userType = userTypeRepository.findByUserTypeName("customer");
 			userType.setUserTypeId(userType.getUserTypeId());
 			List<UserType> userTypes = new ArrayList<>();
 			userTypes.add(userType);
 			signUpRequest.setUserType(userTypes);
+			signUpRequest.setPassword(encoder.encode(signUpRequest.getPassword()));
+			userRepository.save(signUpRequest);
+
 			System.out.println("-------" + signUpRequest);
-			
 
 		} else if (userTypeName.equalsIgnoreCase("vendor")) {
 			UserType userType = userTypeRepository.findByUserTypeName("vendor");
@@ -110,153 +93,100 @@ public class UserService {
 			List<UserType> userTypes = new ArrayList<>();
 			userTypes.add(userType);
 			signUpRequest.setUserType(userTypes);
-			
-		}
-		return new ModelAndView("loginpage");
-	}
+			signUpRequest.setPassword(encoder.encode(signUpRequest.getPassword()));
+			userRepository.save(signUpRequest);
 
-	public void addCustomer(User user) {
-		user.setPassword(encoder.encode(user.getPassword()));
-		userRepository.save(user);
-	}
-
-	public void addVendor(User user) {
-		user.setPassword(encoder.encode(user.getPassword()));
-		System.out.println(user);
-		userRepository.save(user);
-	}
-
-	public ModelAndView edit(int userId) {
-		User user = new User();
-		user = userRepository.findById(userId).get();
-
-		ModelAndView mv = new ModelAndView("update", "user", user);
-		System.out.println("in edit service");
-		return mv;
-	}
-
-	public ModelAndView update(User newUser) {
-		// get the oldUser using the id passed in newUser through hidden form field in
-		// welcomeCustomer.jsp
-		User oldUser = userRepository.findById(newUser.getUserId()).get();
-		ModelAndView mv = null;
-		// get the id of oldUser
-		int userId = oldUser.getUserId();
-		// get the roles of the oldUser
-		List<UserType> roles = oldUser.getUserType();
-		// set the roles of the newUser based on the retrieved roles of oldUser
-		newUser.setUserType(roles);
-		// set the userId of the newUser to the id of oldUser.
-		newUser.setUserId(userId);
-		userRepository.save(newUser);
-		// redirect to the to page welcome based on type of user ie Customer or vendor
-		Iterator<UserType> it = roles.iterator();
-		while (it.hasNext()) {
-			// get the role of the user
-			String role = it.next().getUserTypeName();
-			if (role.equals("customer")) {
-				mv = new ModelAndView("welcomeCustomer", "user", newUser);
-			} else if (role.equals("vendor")) {
-				mv = new ModelAndView("welcomeVendor", "user", newUser);
-			}
 		}
 
-		return mv;
 	}
 
-	public ModelAndView addItem(String itemName, BigDecimal price, int userId) {
-		User user = new User();
-		user = userRepository.findById(userId).get();
-		VendorItem vendorItem = new VendorItem();
-		vendorItem.setItemName(itemName);
-		vendorItem.setPrice(price);
-		vendorItem.setUser(user);
-		vendorItemRepository.save(vendorItem);
-		ModelAndView mv = new ModelAndView("welcomeVendor", "user", user);
-		return mv;
-	}
+	public ResponseEntity<?> updateImpl(User newUser,HttpServletRequest request) {
 
-	public ModelAndView viewItems(int userId) {
-		System.out.println("in view item service");
-		List<VendorItem> ls = vendorItemRepository.findByUserUserId(userId);
-		ModelAndView mv = new ModelAndView("viewItem", "list", ls);
-		return mv;
-	}
-
-	public ModelAndView editItem(int vendorItemId) {
-		VendorItem vendorItem = new VendorItem();
-		vendorItem = vendorItemRepository.findById(vendorItemId).get();
-		ModelAndView mv = new ModelAndView("updateItem", "vendorItem", vendorItem);
-		System.out.println("in edit service");
-		return mv;
-
-	}
-
-	public ModelAndView updateItem(VendorItem vendorItem) {
-		VendorItem oldList = vendorItemRepository.findById(vendorItem.getVendorItemId()).get();
-		User user = oldList.getUser();
-		oldList = vendorItem;
-		oldList.setUser(user);
-		vendorItemRepository.save(oldList);
-		ModelAndView mv = new ModelAndView("welcomeVendor", "user", user);
-		return mv;
-	}
-
-	public ModelAndView deleteItems(int vendorItemId) {
-		VendorItem vendorItem = vendorItemRepository.findById(vendorItemId).get();
-		User user = vendorItem.getUser();
-		ModelAndView mv = new ModelAndView("welcomeVendor", "user", user);
-		vendorItemRepository.deleteById(vendorItemId);
-		return mv;
-	}
-
-	public ModelAndView editPassword(int userId) {
-		User user = new User();
-		user = userRepository.findById(userId).get();
-		ModelAndView mv = new ModelAndView("updatePassword", "user", user);
-		return mv;
-
-	}
-
-	public ModelAndView updatePassword(int userId, String newPassword, String confirmPassword) {
-		ModelAndView mv = null;
-		User user = new User();
-		user = userRepository.findById(userId).get();
-		System.out.println(user);
-		System.out.println(user.getPassword());
-
-		if (newPassword.equals(confirmPassword)) {
-			user.setPassword(encoder.encode(newPassword));
-
-			System.out.println(encoder.encode(newPassword));
-			userRepository.save(user);
-			List<UserType> roles = user.getUserType();
-			// get the role of the user
-			String role = roles.get(0).getUserTypeName();
-			System.out.println(role);
-			if (role.equals("customer")) {
-				mv = new ModelAndView("welcomeCustomer", "user", user);
-			} else if (role.equals("vendor")) {
-				mv = new ModelAndView("welcomeVendor", "user", user);
-			}
-
+		String replaceToken = request.getHeader("Authorization");
+		String Token=replaceToken.replace("Bearer ","");
+		 String username = jwtProvider.getUserNameFromJwtToken(Token);
+		 if(userRepository.findByUserName(username)!=null)
+		 {
+			User oldUser  =userRepository.findByUserName(username); 
+			newUser.setUserId(oldUser.getUserId());
+			Token tempToken = oldUser.getToken();
+			oldUser=newUser;
+			oldUser.setPassword(encoder.encode(newUser.getPassword()));
+			oldUser.setToken(tempToken);
+			userRepository.save(oldUser);
+			return ResponseEntity.ok().body("User successfully Updated");
 		} else {
-			mv = new ModelAndView("errorPage");
+			return ResponseEntity.ok().body("User id not found");
 		}
-		return mv;
+
 	}
 
-	public ModelAndView ListOfVendors() {
+	public ResponseEntity<?> showVendorItems(int vendorId) {
+		if (userRepository.findById(vendorId) != null && vendorItemRepository.findByUserUserId(vendorId) != null
+				&& !vendorItemRepository.findByUserUserId(vendorId).isEmpty())  {
+			
+				List<VendorItem> listOfVendorItem = vendorItemRepository.findByUserUserId(vendorId);
+				return ResponseEntity.ok().body(listOfVendorItem);
+			
+		} else {
+			return ResponseEntity.ok().body("Enter valid vendorID");
+		}
+	}
+
+	public ResponseEntity<?> addItemImpl(VendorItem vendorItem,HttpServletRequest request) {
+		String replaceToken = request.getHeader("Authorization");
+		String Token=replaceToken.replace("Bearer ","");
+		 String username = jwtProvider.getUserNameFromJwtToken(Token);
+		 System.out.println("username----------------------------------"+username);
+		 if(userRepository.findByUserName(username)!=null)
+		 {
+			 vendorItem.setUser(userRepository.findByUserName(username));
+		vendorItemRepository.save(vendorItem);
+		return ResponseEntity.ok().body("successfully added Item");
+		}else {
+		return ResponseEntity.ok().body("Enter valid vendorId");
+		}
+	}
+
+	public ResponseEntity<?> editItem(String itemName, VendorItem vendorItem,HttpServletRequest request) {
+		String replaceToken = request.getHeader("Authorization");
+		String Token=replaceToken.replace("Bearer ","");
+		 String username = jwtProvider.getUserNameFromJwtToken(Token);
+		 System.out.println("username----------------------------------"+username);
+		 if(userRepository.findByUserName(username)!=null)
+		 {
+			 User oldUser=userRepository.findByUserName(username);
+			 VendorItem oldVendorItem=vendorItemRepository.findByUserUserIdAndItemName(oldUser.getUserId(),itemName);
+		vendorItem.setVendorItemId(oldVendorItem.getVendorItemId());
+		vendorItem.setUser(oldUser);
+		vendorItemRepository.save(vendorItem);
+		return ResponseEntity.ok().body("successfully edited item");
+		 }else {
+			return ResponseEntity.ok().body("Enter valid itemName");
+			}
+	}
+
+	public ResponseEntity<?> deleteItems(String itemName,HttpServletRequest request) {
+		String replaceToken = request.getHeader("Authorization");
+		String Token=replaceToken.replace("Bearer ","");
+		 String username = jwtProvider.getUserNameFromJwtToken(Token);
+		 System.out.println("username----------------------------------"+username);
+		 if(userRepository.findByUserName(username)!=null)
+		 {
+		 User oldUser=userRepository.findByUserName(username);
+		 VendorItem vendorItem=vendorItemRepository.findByUserUserIdAndItemName(oldUser.getUserId(), itemName);
+		vendorItemRepository.deleteById(vendorItem.getVendorItemId());
+		return ResponseEntity.ok().body("deleted");
+		}else {
+			return ResponseEntity.ok().body("Enter valid itemName");
+			}
+	}
+
+	public ResponseEntity<?> ListOfVendors() {
+
 		List<User> vendors = userRepository.findByUserTypeUserTypeId(2);
 		System.out.println("in show vendor service");
-		return new ModelAndView("showVendorList", "vendorList", vendors);
-	}
-
-	public ModelAndView showVendorItems(int userId) {
-		List<VendorItem> listOfVendorItem = vendorItemRepository.findByUserUserId(userId);
-		User vendor = userRepository.findById(userId).get();
-		ModelAndView mv = new ModelAndView("displayItem", "vendorItem", listOfVendorItem).addObject("vendor", vendor);
-		return mv;
+		return ResponseEntity.ok().body(vendors);
 	}
 
 	public ModelAndView addToCartImpl(int userId, int vendorItemId) {
@@ -276,9 +206,5 @@ public class UserService {
 		ModelAndView mv = new ModelAndView("displayCart", "vendorItem", vendorItem);
 		return mv;
 	}
-
-
-
-
 
 }

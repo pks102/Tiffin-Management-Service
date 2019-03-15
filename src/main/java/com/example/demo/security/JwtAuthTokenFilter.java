@@ -16,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.demo.model.Token;
 import com.example.demo.repository.JwtTokenRepository;
 import com.example.demo.service.UserDetailsServiceImpl;
 
@@ -50,6 +49,7 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
         	
             String jwt = getJwt(request);
             if (jwt!=null && tokenProvider.validateJwtToken(jwt)) {
+            	System.out.println("-----------------jwt-------------------"+jwt);
                 String username = tokenProvider.getUserNameFromJwtToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication 
@@ -65,15 +65,17 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String getJwt(HttpServletRequest response) {
-    	Token token=new Token();
-       token=tokenRepo.findById(74).get();
-    	String authHeader = token.getJwtToken();
-     // String temp=response.getHeader("Authorization");
-     // System.out.println("==============token=========="+temp);
-        if (authHeader != null ) {
-        	return authHeader;
-        }
-        return null;
+    private String getJwt(HttpServletRequest request) {
+    	   String authHeader = request.getHeader("Authorization");
+       	System.out.println("-----------out----------"+authHeader);
+           if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        	   System.out.println("-----------in----------"+authHeader);
+           	return authHeader.replace("Bearer ","");
+           	
+           }
+
+           return null;
+       }
+
     }
-}
+
