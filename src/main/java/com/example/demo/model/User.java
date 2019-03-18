@@ -44,9 +44,11 @@ public class User{
 	@Column(updatable = true)
 	private Date updatedDate;
 	
+	@Column(unique = true)
 	@Email
 	private String emailId;
-
+	
+	@Column(unique = true)
 	@Size(max = 12, min = 10)
 	private String contactNo;
 
@@ -55,7 +57,8 @@ public class User{
 
 	@Size(max = 30)
 	private String name;
-
+	
+	@Column(unique = true)
 	@Size(max = 30)
 	private String userName;
 

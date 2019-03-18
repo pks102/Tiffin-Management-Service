@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.example.demo.model.LoginForm;
 import com.example.demo.model.User;
@@ -28,6 +26,10 @@ import com.example.demo.repository.VendorItemRepository;
 import com.example.demo.security.JwtProvider;
 import com.example.demo.service.UserService;
 
+/**
+ * @author kartik.parmar
+ *
+ */
 @RestController
 public class UserController {
 	@Autowired
@@ -62,9 +64,9 @@ public class UserController {
 	 * @return
 	 */
 	@PostMapping("/signup/{userType}")
-	public void registerUser(@RequestBody User signUpRequest, @PathVariable("userType") String userTypeName) {
+	public ResponseEntity<?> registerUser(@RequestBody User signUpRequest, @PathVariable("userType") String userTypeName) {
 
-		userService.registerUserImpl(signUpRequest, userTypeName);
+		return userService.registerUserImpl(signUpRequest, userTypeName);
 	}
 
 	/**
@@ -85,7 +87,6 @@ public class UserController {
 	@PreAuthorize("hasRole('ROLE_customer')")
 	@GetMapping("/showVendors") // to show all the vendors
 	public ResponseEntity<?> showVendors() {
-		System.out.println("in show vendor controller");
 		return userService.ListOfVendors();
 	}
 
@@ -96,7 +97,6 @@ public class UserController {
 	 */
 	@GetMapping("/showVendorItems/{userId}") // show items to Customer
 	public ResponseEntity<?> showVendorItem(@PathVariable("userId") int userId) {
-		System.out.println("in show vendor Items controller");
 		return userService.showVendorItems(userId);
 	}
 	
@@ -112,29 +112,44 @@ public class UserController {
 		
 	}
 	
+
 	/**
-	 * @param userId
-	 * @param vendorItemId
+	 * @param vendorId
+	 * @param itemName
+	 * @param request
 	 * @return
 	 */
-	@PostMapping("/addToCart") // show items to Customer
-	public ModelAndView addToCart(@RequestParam("vendorId") int userId,
-			@RequestParam("vendorItemId") int vendorItemId) {
-		System.out.println("in addto cart controller" + userId);
-		ModelAndView mv = userService.addToCartImpl(userId, vendorItemId);
-		return mv;
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@PostMapping("/addToCart/{vendorId}/{itemName}/{quantity}") // show items to Customer
+	public ResponseEntity<?> addToCart(@PathVariable("vendorId") int vendorId,@PathVariable("quantity")int quantity,@PathVariable("itemName")String itemName,HttpServletRequest request) {
+		return userService.addToCartImpl(vendorId,quantity,itemName,request);
 	}
 
 	/**
-	 * @param vendorItemId
+	 * @param request
 	 * @return
 	 */
-	@PostMapping("viewCart")
-	public ModelAndView viewCart(@RequestParam("cart") int vendorItemId) {
-		ModelAndView mv = userService.viewCartImpl(vendorItemId);
-		return mv;
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@GetMapping("/viewCart")
+	public ResponseEntity<?> viewCart(HttpServletRequest request) {
+		return userService.viewCartImpl(request);
 	}
 
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@PostMapping("/deleteCart/{itemName}") // show items to Customer
+	public ResponseEntity<?> deleteCart(@PathVariable("itemName")String itemName,@RequestBody VendorItem vendorItem,HttpServletRequest request) {
+		return userService.deleteCartImpl(itemName,request);
+	}
+	
+	
+	/*
+	 * @PreAuthorize("hasRole('ROLE_customer')")
+	 * 
+	 * @PostMapping("/payment/{paymentMode}") // show items to Customer public
+	 * ResponseEntity<?> payment(@PathVariable("paymentMode")String
+	 * paymentMode,HttpServletRequest request) { return
+	 * userService.paymentImpl(paymentMode,request); }
+	 */
 
 	/**
 	 * @param vendorId
@@ -146,8 +161,7 @@ public class UserController {
 	@PutMapping("/editItem/{itemName}")
 	public ResponseEntity<?> editItem(@PathVariable("itemName")String itemName,@RequestBody VendorItem vendorItem,HttpServletRequest request) {
 		return userService.editItem(itemName,vendorItem,request);
-
-	}
+}
 
 	
 	/**
