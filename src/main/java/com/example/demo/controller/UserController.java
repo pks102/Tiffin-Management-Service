@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.LoginForm;
@@ -47,134 +47,83 @@ public class UserController {
 	@Autowired
 	JwtTokenRepository tokenRepo;
 
-	
-	/**
-	 * @param loginRequest
-	 * @return
-	 */
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginForm loginRequest) {
 
 		return userService.signInVerify(loginRequest);
 	}
 
-	/**
-	 * @param signUpRequest
-	 * @param userTypeName
-	 * @return
-	 */
 	@PostMapping("/signup/{userType}")
-	public ResponseEntity<?> registerUser(@RequestBody User signUpRequest, @PathVariable("userType") String userTypeName) {
+	public ResponseEntity<?> registerUser(@RequestBody User signUpRequest,
+			@PathVariable("userType") String userTypeName) {
 
 		return userService.registerUserImpl(signUpRequest, userTypeName);
 	}
 
-	/**
-	 * @param userId
-	 * @return
-	 */
-	@PutMapping("/editUser")
-	public ResponseEntity<?> updateUser(
-			@RequestBody User user,HttpServletRequest request) {
+	@PostMapping("/user")
+	public ResponseEntity<?> updateUser(@RequestBody User user, HttpServletRequest request) {
 
-		return userService.updateImpl(user,request);
+		return userService.updateImpl(user, request);
 
 	}
 
-	/**
-	 * @return
-	 */
 	@PreAuthorize("hasRole('ROLE_customer')")
-	@GetMapping("/showVendors") // to show all the vendors
+	@GetMapping("/vendor") // to show all the vendors
 	public ResponseEntity<?> showVendors() {
 		return userService.ListOfVendors();
 	}
 
-	
-	/**
-	 * @param userId
-	 * @return
-	 */
-	@GetMapping("/showVendorItems/{userId}") // show items to Customer
-	public ResponseEntity<?> showVendorItem(@PathVariable("userId") int userId) {
-		return userService.showVendorItems(userId);
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@GetMapping("/vendorItems/{vendorId}") // show items to Customer
+	public ResponseEntity<?> showVendorItem(@PathVariable("vendorId") int vendorId) {
+		return userService.showVendorItems(vendorId);
 	}
-	
-	/**
-	 * @param vendorItem
-	 * @param userId
-	 * @return
-	 */
+
 	@PreAuthorize("hasRole('ROLE_vendor')")
-	@PostMapping("/addItem")
-	public ResponseEntity<?> addItem(@RequestBody VendorItem vendorItem,HttpServletRequest request) {
-	return	userService.addItemImpl(vendorItem,request);
-		
-	}
-	
+	@PostMapping("/vendor/item") // add items for vendor
+	public ResponseEntity<?> addItem(@RequestBody VendorItem vendorItem, HttpServletRequest request) {
+		return userService.addItemImpl(vendorItem, request);
 
-	/**
-	 * @param vendorId
-	 * @param itemName
-	 * @param request
-	 * @return
-	 */
-	@PreAuthorize("hasRole('ROLE_customer')")
-	@PostMapping("/addToCart/{vendorId}/{itemName}/{quantity}") // show items to Customer
-	public ResponseEntity<?> addToCart(@PathVariable("vendorId") int vendorId,@PathVariable("quantity")int quantity,@PathVariable("itemName")String itemName,HttpServletRequest request) {
-		return userService.addToCartImpl(vendorId,quantity,itemName,request);
 	}
 
-	/**
-	 * @param request
-	 * @return
-	 */
+	@PreAuthorize("hasRole('ROLE_vendor')")
+	@PostMapping("/vendor/{vendorItemId}") // edit items for vendor
+	public ResponseEntity<?> editItem(@PathVariable("vendorItemId") int vendorItemId,
+			@RequestBody VendorItem vendorItem, HttpServletRequest request) {
+		return userService.editItem(vendorItemId, vendorItem, request);
+	}
+
+	@PreAuthorize("hasRole('ROLE_vendor')")
+	@DeleteMapping("vendor/{vendorItemId}") // delete items for vendor
+	public ResponseEntity<?> deleteItem(@PathVariable("vendorItemId") int vendorItemId, HttpServletRequest request) {
+		return userService.deleteItems(vendorItemId, request);
+
+	}
+
 	@PreAuthorize("hasRole('ROLE_customer')")
-	@GetMapping("/viewCart")
+	@GetMapping("/addToCart/{vendorItemId}/{quantity}") // add items to cart for customer
+	public ResponseEntity<?> addToCart(@PathVariable("vendorItemId") int vendorItemId,
+			@PathVariable("quantity") int quantity, HttpServletRequest request) {
+		return userService.addToCartImpl(vendorItemId, quantity, request);
+	}
+
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@GetMapping("/cart") // view Cart for customer
 	public ResponseEntity<?> viewCart(HttpServletRequest request) {
 		return userService.viewCartImpl(request);
 	}
 
 	@PreAuthorize("hasRole('ROLE_customer')")
-	@PostMapping("/deleteCart/{itemName}") // show items to Customer
-	public ResponseEntity<?> deleteCart(@PathVariable("itemName")String itemName,@RequestBody VendorItem vendorItem,HttpServletRequest request) {
-		return userService.deleteCartImpl(itemName,request);
-	}
-	
-	
-	/*
-	 * @PreAuthorize("hasRole('ROLE_customer')")
-	 * 
-	 * @PostMapping("/payment/{paymentMode}") // show items to Customer public
-	 * ResponseEntity<?> payment(@PathVariable("paymentMode")String
-	 * paymentMode,HttpServletRequest request) { return
-	 * userService.paymentImpl(paymentMode,request); }
-	 */
-
-	/**
-	 * @param vendorId
-	 * @param itemName
-	 * @param vendorItem
-	 * @return
-	 */
-	@PreAuthorize("hasRole('ROLE_vendor')")
-	@PutMapping("/editItem/{itemName}")
-	public ResponseEntity<?> editItem(@PathVariable("itemName")String itemName,@RequestBody VendorItem vendorItem,HttpServletRequest request) {
-		return userService.editItem(itemName,vendorItem,request);
-}
-
-	
-	/**
-	 * @param vendorItemId
-	 * @param itemName
-	 * @return
-	 */
-	@PreAuthorize("hasRole('ROLE_vendor')")
-	@DeleteMapping("/deleteItem/{itemName}")
-	public ResponseEntity<?> deleteItem(@PathVariable("itemName")String itemName,HttpServletRequest request) {
-		return userService.deleteItems(itemName, request);
-
+	@DeleteMapping("/cart/{cartId}") // Delete items from cart for customer
+	public ResponseEntity<?> deleteCart(@PathVariable("cartId") int cartId, @RequestBody VendorItem vendorItem,
+			HttpServletRequest request) {
+		return userService.deleteCartImpl(cartId, request);
 	}
 
+	@PreAuthorize("hasRole('ROLE_customer')")
+	@GetMapping("/order/{paymentMode}") // placed order
+	ResponseEntity<?> payment(@PathVariable("paymentMode") String paymentMode, HttpServletRequest request) {
+		return userService.orderImpl(paymentMode, request);
+	}
 
 }

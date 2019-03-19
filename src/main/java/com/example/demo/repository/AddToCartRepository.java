@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.model.Cart;
 
 public interface AddToCartRepository extends JpaRepository<Cart, Integer>{
-	List<Cart> findByUserUserId(int userId);
-	Cart findByVendorItemItemNameAndUserUserId(String itemName,int customerId);
+	List<Cart> findByUserUserIdAndOrderStatus(int userId,String orderStatus);
+	
 }

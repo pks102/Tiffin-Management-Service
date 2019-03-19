@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,12 +18,14 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.LoginForm;
+import com.example.demo.model.Order;
 import com.example.demo.model.Token;
 import com.example.demo.model.User;
 import com.example.demo.model.UserType;
 import com.example.demo.model.VendorItem;
 import com.example.demo.repository.AddToCartRepository;
 import com.example.demo.repository.JwtTokenRepository;
+import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserTypeRepository;
 import com.example.demo.repository.VendorItemRepository;
@@ -45,7 +48,9 @@ public class UserService {
 	@Autowired
 	AddToCartRepository cartRepository;
 	@Autowired
-	private PasswordEncoder encoder;
+	PasswordEncoder encoder;
+	@Autowired
+	OrderRepository orderRepository; 
 
 	public ResponseEntity<?> signInVerify(LoginForm loginRequest) {
 
@@ -76,7 +81,7 @@ public class UserService {
 			userRepository.save(user1);
 			System.out.println("token  else-----------------------" + token);
 		}
-		return new ResponseEntity<>(new Response("200" ,user1,"Succesfully logged in"), HttpStatus.OK);
+		return new ResponseEntity<>(new Response("200", "Succesfully logged in", user1), HttpStatus.OK);
 	}
 
 	public ResponseEntity<?> registerUserImpl(User signUpRequest, String userTypeName) {
@@ -88,8 +93,7 @@ public class UserService {
 			signUpRequest.setUserType(userTypes);
 			signUpRequest.setPassword(encoder.encode(signUpRequest.getPassword()));
 			userRepository.save(signUpRequest);
-			return  new ResponseEntity<>(new Response("200" ,signUpRequest,"Succesfully registered"),
-                    HttpStatus.OK);
+			return new ResponseEntity<>(new Response("200", "Succesfully registered", signUpRequest), HttpStatus.OK);
 
 		} else if (userTypeName.equalsIgnoreCase("vendor")) {
 			UserType userType = userTypeRepository.findByUserTypeName("vendor");
@@ -99,154 +103,170 @@ public class UserService {
 			signUpRequest.setUserType(userTypes);
 			signUpRequest.setPassword(encoder.encode(signUpRequest.getPassword()));
 			userRepository.save(signUpRequest);
-					return  new ResponseEntity<>(new Response("200" ,signUpRequest,"Succesfully registered "),
-		                    HttpStatus.OK);
-		}else {
-			return  new ResponseEntity<>(new Response("400" ,"","Enter valid details"),
-                    HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(new Response("200", "Succesfully registered ", signUpRequest), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid details"), HttpStatus.BAD_REQUEST);
 		}
 	}
 
-
-	public ResponseEntity<?> updateImpl(User newUser,HttpServletRequest request) {
+	public ResponseEntity<?> updateImpl(User newUser, HttpServletRequest request) {
 
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		 if(userRepository.findByUserName(username)!=null)
-		 {
-			User oldUser  =userRepository.findByUserName(username); 
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		if (userRepository.findByUserName(username) != null) {
+			User oldUser = userRepository.findByUserName(username);
 			newUser.setUserId(oldUser.getUserId());
+			newUser.setUserType(oldUser.getUserType());
 			Token tempToken = oldUser.getToken();
-			oldUser=newUser;
+			oldUser = newUser;
 			oldUser.setPassword(encoder.encode(newUser.getPassword()));
 			oldUser.setToken(tempToken);
 			userRepository.save(oldUser);
-			return  new ResponseEntity<>(new Response("200" ,oldUser,"Succesfully updated"),
-                    HttpStatus.OK);		} else {
-                    	return  new ResponseEntity<>(new Response("401" ,"","Enter valid Details"),
-                                HttpStatus.BAD_REQUEST);		}
+			return new ResponseEntity<>(new Response("200", "Succesfully updated", oldUser), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 
 	}
 
 	public ResponseEntity<?> showVendorItems(int vendorId) {
 		if (userRepository.findById(vendorId) != null && vendorItemRepository.findByUserUserId(vendorId) != null
-				&& !vendorItemRepository.findByUserUserId(vendorId).isEmpty())  {
-			
-				List<VendorItem> listOfVendorItem = vendorItemRepository.findByUserUserId(vendorId);
-				return new ResponseEntity(new Response("200" ,listOfVendorItem,"Succesfully updated"),
-                    HttpStatus.OK);
-			
+				&& !vendorItemRepository.findByUserUserId(vendorId).isEmpty()) {
+
+			List<VendorItem> listOfVendorItem = vendorItemRepository.findByUserUserId(vendorId);
+			return new ResponseEntity(new Response("200", "Succesfully updated", listOfVendorItem), HttpStatus.OK);
+
 		} else {
-			return  new ResponseEntity<>(new Response("401" ,"","Enter valid Details"),
-                    HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	public ResponseEntity<?> addItemImpl(VendorItem vendorItem,HttpServletRequest request) {
+	public ResponseEntity<?> addItemImpl(VendorItem vendorItem, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		 System.out.println("username----------------------------------"+username);
-		 if(userRepository.findByUserName(username)!=null)
-		 {
-			 vendorItem.setUser(userRepository.findByUserName(username));
-		vendorItemRepository.save(vendorItem);
-		return ResponseEntity.ok().body("successfully added Item");
-		}else {
-		return ResponseEntity.ok().body("Enter valid vendorId");
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		System.out.println("username----------------------------------" + username);
+		if (userRepository.findByUserName(username) != null) {
+			vendorItem.setUser(userRepository.findByUserName(username));
+			vendorItemRepository.save(vendorItem);
+			return new ResponseEntity(new Response("200", "successfully added Item", vendorItem), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	public ResponseEntity<?> editItem(String itemName, VendorItem vendorItem,HttpServletRequest request) {
+	public ResponseEntity<?> editItem(int vendorItemId, VendorItem vendorItem, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		 if(userRepository.findByUserName(username)!=null)
-		 {
-			 User oldUser=userRepository.findByUserName(username);
-			 VendorItem oldVendorItem=vendorItemRepository.findByUserUserIdAndItemName(oldUser.getUserId(),itemName);
-		vendorItem.setVendorItemId(oldVendorItem.getVendorItemId());
-		vendorItem.setUser(oldUser);
-		vendorItemRepository.save(vendorItem);
-		return ResponseEntity.ok().body("successfully edited item");
-		 }else {
-			return ResponseEntity.ok().body("Enter valid itemName");
-			}
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		if (userRepository.findByUserName(username) != null) {
+			User oldUser = userRepository.findByUserName(username);
+			VendorItem oldVendorItem = vendorItemRepository.findById(vendorItemId).get();
+			System.out.println("----------------------" + oldVendorItem);
+			vendorItem.setVendorItemId(oldVendorItem.getVendorItemId());
+			vendorItem.setUser(oldUser);
+			vendorItemRepository.save(vendorItem);
+			return new ResponseEntity(new Response("200", "successfully Edited Item", vendorItem), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 	}
 
-	public ResponseEntity<?> deleteItems(String itemName,HttpServletRequest request) {
+	public ResponseEntity<?> deleteItems(int vendorItemId, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		 System.out.println("username----------------------------------"+username);
-		 if(userRepository.findByUserName(username)!=null)
-		 {
-		 User oldUser=userRepository.findByUserName(username);
-		 VendorItem vendorItem=vendorItemRepository.findByUserUserIdAndItemName(oldUser.getUserId(), itemName);
-		vendorItemRepository.deleteById(vendorItem.getVendorItemId());
-		return ResponseEntity.ok().body("deleted");
-		}else {
-			return ResponseEntity.ok().body("Enter valid itemName");
-			}
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		System.out.println("username----------------------------------" + username);
+		if (userRepository.findByUserName(username) != null) {
+			User oldUser = userRepository.findByUserName(username);
+			VendorItem vendorItem = vendorItemRepository.findById(vendorItemId).get();
+			vendorItemRepository.deleteById(vendorItem.getVendorItemId());
+			return new ResponseEntity(new Response("200", "successfully Deleted Item", vendorItem), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	public ResponseEntity<?> ListOfVendors() {
 
 		List<User> vendors = userRepository.findByUserTypeUserTypeId(2);
 		System.out.println("in show vendor service");
-		return ResponseEntity.ok().body(vendors);
+		return new ResponseEntity(new Response("200", "List of Vendors", vendors), HttpStatus.OK);
 	}
 
-	public ResponseEntity<?> addToCartImpl(int vendorId,int quantity,String itemName,HttpServletRequest request ) {
+	public ResponseEntity<?> addToCartImpl(int vendorItemId, int quantity, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		 if(userRepository.findByUserName(username)!=null && vendorItemRepository.findByUserUserId(vendorId) != null
-					&& !vendorItemRepository.findByUserUserId(vendorId).isEmpty())
-		 {
-			 User oldUser=userRepository.findByUserName(username);
-		VendorItem vendorItem=vendorItemRepository.findByUserUserIdAndItemName(vendorId, itemName);
-		Cart cart=new Cart();
-		cart.setUser(oldUser);
-		cart.setVendorItem(vendorItem);
-		cart.setQuantity(quantity);
-		cartRepository.save(cart);
-		return ResponseEntity.ok().body("item successfully added");
-		 }else {
-			 return ResponseEntity.ok().body("Invalid vendorId or itemName");
-		 }
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		if (userRepository.findByUserName(username) != null && vendorItemRepository.findById(vendorItemId) != null) {
+			User oldUser = userRepository.findByUserName(username);
+			VendorItem vendorItem = vendorItemRepository.findById(vendorItemId).get();
+			Cart cart = new Cart();
+			cart.setUser(oldUser);
+			cart.setVendorItem(vendorItem);
+			cart.setQuantity(quantity);
+			cart.setOrderStatus("pending");
+			cartRepository.save(cart);
+			return new ResponseEntity(new Response("200", "item successfully added", cart), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	public ResponseEntity<?> viewCartImpl(HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		User customer= userRepository.findByUserName(username);
-		 List<Cart> cart=cartRepository.findByUserUserId(customer.getUserId());
-		 return ResponseEntity.ok().body(cart);
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		User customer = userRepository.findByUserName(username);
+		if (!cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(),"pending").isEmpty()) {
+			List<Cart> cart = cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(),"pending");
+			return new ResponseEntity(new Response("200", "List of Cart", cart), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 	}
 
-	public ResponseEntity<?> deleteCartImpl(String itemName, HttpServletRequest request) {
+	public ResponseEntity<?> deleteCartImpl(int cartId, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
-		String Token=replaceToken.replace("Bearer ","");
-		 String username = jwtProvider.getUserNameFromJwtToken(Token);
-		
-		if(userRepository.findByUserName(username)!=null && cartRepository.findByVendorItemItemNameAndUserUserId(itemName, userRepository.findByUserName(username).getUserId())!=null) {
-			User customer= userRepository.findByUserName(username);
-			Cart cart=cartRepository.findByVendorItemItemNameAndUserUserId(itemName, customer.getUserId());
-		cartRepository.delete(cart);
-		return ResponseEntity.ok().body("item deleted from the cart");
-		}else {
-			 return ResponseEntity.ok().body(" item not present in cart");
-	}
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+
+		if (userRepository.findByUserName(username) != null && cartRepository.findById(cartId).get() != null) {
+			Cart cart = cartRepository.findById(cartId).get();
+			cartRepository.delete(cart);
+			return new ResponseEntity(new Response("200", "item deleted from the cart", cart), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
 	}
 
-	/*
-	 * public ResponseEntity<?> paymentImpl(String paymentMode, HttpServletRequest
-	 * request) { String replaceToken = request.getHeader("Authorization"); String
-	 * Token=replaceToken.replace("Bearer ",""); String username =
-	 * jwtProvider.getUserNameFromJwtToken(Token); User customer=
-	 * userRepository.findByUserName(username); return null; }
-	 */
+	public ResponseEntity<?> orderImpl(String paymentMode, HttpServletRequest request) {
+		String replaceToken = request.getHeader("Authorization");
+		String Token = replaceToken.replace("Bearer ", "");
+		String username = jwtProvider.getUserNameFromJwtToken(Token);
+		if (userRepository.findByUserName(username) != null) {
+		User customer = userRepository.findByUserName(username);
+		if(!cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(), "pending").isEmpty() && cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(), "pending")!=null) {
+		List<Cart> cart=cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(), "pending");
+		Iterator<Cart> it=cart.iterator();
+		while(it.hasNext()) {
+			
+			it.next().setOrderStatus("placed");
+		}
+		Order order=new Order();
+		order.setUser(customer);
+		order.setPaymentMode(paymentMode);
+		orderRepository.save(order);
+		return new ResponseEntity(new Response("200", "order successfully placed",cart), HttpStatus.OK);
+		}else {
+			return new ResponseEntity<>(new Response("400", "No items available in cart"), HttpStatus.BAD_REQUEST);
+		}
+		}
+		else {
+			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+
 }

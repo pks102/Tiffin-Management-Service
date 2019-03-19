@@ -27,6 +27,16 @@ public class Cart {
 
 	private int quantity;
 	
+	private String orderStatus;
+	
+	public String getOrderStatus() {
+		return orderStatus;
+	}
+
+	public void setOrderStatus(String orderStatus) {
+		this.orderStatus = orderStatus;
+	}
+
 	public int getQuantity() {
 		return quantity;
 	}
@@ -34,13 +44,11 @@ public class Cart {
 	public void setQuantity(int quantity) {
 		this.quantity = quantity;
 	}
-
 	
-
 	@Override
 	public String toString() {
 		return "Cart [cartId=" + cartId + ", user=" + user + ", vendorItem=" + vendorItem + ", quantity=" + quantity
-				+ "]";
+				+ ", orderStatus=" + orderStatus + "]";
 	}
 
 	public int getCartId() {

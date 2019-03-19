@@ -22,23 +22,27 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class User{
-
+	@JsonIgnore
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int userId;
-
+	
+	@JsonIgnore
 	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "userId"), inverseJoinColumns = @JoinColumn(name = "userTypeId"))
     private List<UserType> userType;
 
-	
+	@JsonIgnore
 	@CreationTimestamp
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
 	private Date createdDate;
-
+	
+	@JsonIgnore
 	@UpdateTimestamp
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = true)
@@ -61,9 +65,12 @@ public class User{
 	@Column(unique = true)
 	@Size(max = 30)
 	private String userName;
-
+	
+	
 	@Size(min = 6)
 	private String password;
+	
+	
 	@OneToOne
 	private Token token;
 

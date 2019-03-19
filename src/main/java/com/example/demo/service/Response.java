@@ -4,10 +4,15 @@ public class Response<T> {
 	public String statusCode;
 	public T data;	
 
-	public Response(String statusCode, T data, String message) {
+	public Response(String statusCode,String message,T data) {
 		super();
 		this.statusCode = statusCode;
+		this.message = message;
 		this.data = data;
+	}
+	public Response(String statusCode,String message) {
+		super();
+		this.statusCode = statusCode;
 		this.message = message;
 	}
 	public String getStatusCode() {

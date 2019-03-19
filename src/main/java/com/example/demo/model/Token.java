@@ -5,6 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Token {
 
@@ -28,7 +30,7 @@ public class Token {
 		return "Token [ jwtToken=" + jwtToken + "]";
 	}
 
-	
+	@JsonIgnore
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Id
 	private int tokenId;
