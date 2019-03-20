@@ -9,12 +9,16 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class VendorItem {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private int vendorItemId;
 	
+	
+	@JsonIgnore
 	@ManyToOne
     @JoinColumn(name = "vendorId")
     private User user;
@@ -26,7 +30,7 @@ public class VendorItem {
 	}
 	private String itemName;
     
-    private BigDecimal price;
+    private double price;
     
 	public int getVendorItemId() {
 		return vendorItemId;
@@ -50,10 +54,10 @@ public class VendorItem {
 	public void setItemName(String itemName) {
 		this.itemName = itemName;
 	}
-	public BigDecimal getPrice() {
+	public double getPrice() {
 		return price;
 	}
-	public void setPrice(BigDecimal price) {
+	public void setPrice(double price) {
 		this.price = price;
 	}
 }

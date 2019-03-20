@@ -17,16 +17,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	UserRepository userRepository;
 
 	@Override
-    @Transactional
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
-    	 User user =null;
-    	if(userRepository.findByUserName(username)!=null) {
-         user = userRepository.findByUserName(username);
-    	}else {
-         new UsernameNotFoundException("User Not Found with -> username or email : " + username);
-    	}
-        System.out.println("------------inusersdetailsserviceimpl"+user);
-        return new UserPrinciple(user);
-        }
+	@Transactional
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		User user = null;
+		if (userRepository.findByUserName(username) != null) {
+			System.out.println("-----------userName-- loadByUsername------------" + username);
+			user = userRepository.findByUserName(username);
+		} else {
+			new UsernameNotFoundException("User Not Found with -> username or email : " + username);
+		}
+		return new UserPrinciple(user);
+	}
 }

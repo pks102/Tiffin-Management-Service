@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.Email;
@@ -21,31 +22,37 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class User{
-
+	@JsonIgnore
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int userId;
-
+	
+	@JsonIgnore
 	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "userId"), inverseJoinColumns = @JoinColumn(name = "userTypeId"))
     private List<UserType> userType;
 
-	
+	@JsonIgnore
 	@CreationTimestamp
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
 	private Date createdDate;
-
+	
+	@JsonIgnore
 	@UpdateTimestamp
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = true)
 	private Date updatedDate;
 	
+	@Column(unique = true)
 	@Email
 	private String emailId;
-
+	
+	@Column(unique = true)
 	@Size(max = 12, min = 10)
 	private String contactNo;
 
@@ -54,12 +61,25 @@ public class User{
 
 	@Size(max = 30)
 	private String name;
-
+	
+	@Column(unique = true)
 	@Size(max = 30)
 	private String userName;
-
+	
+	
 	@Size(min = 6)
 	private String password;
+	
+	@OneToOne
+	private Token token;
+
+	public Token getToken() {
+		return token;
+	}
+
+	public void setToken(Token token) {
+		this.token = token;
+	}
 
 	public String getName() {
 		return name;
@@ -88,13 +108,16 @@ public class User{
         this.password = users.getPassword();
         this.address = users.getAddress();
         this.contactNo = users.getContactNo();
+        this.token=users.getToken();
         }
+
+	
 
 	@Override
 	public String toString() {
 		return "User [userId=" + userId + ", userType=" + userType + ", createdDate=" + createdDate + ", updatedDate="
 				+ updatedDate + ", emailId=" + emailId + ", contactNo=" + contactNo + ", address=" + address + ", name="
-				+ name + ", userName=" + userName + ", password=" + password + "]";
+				+ name + ", userName=" + userName + ", password=" + password + ", token=" + token + "]";
 	}
 
 	public void setName(String name) {

@@ -26,12 +26,11 @@
 </th>
 </tr>
 </m:forEach>
-
 </table>
 <form action="/viewOrder" method="post">
 <input type="submit" value="viewOrder">
 <input type="hidden" name="vendorId" value="${vendor.getUserId()}">
-<input type="hidden" name="cart" value="${cart.getVendorItemId()}">
+<%-- <input type="hidden" name="cart" value="${cart.getVendorItemId()}"> --%>
 
 </form>
 
