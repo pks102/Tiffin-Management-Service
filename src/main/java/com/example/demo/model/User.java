@@ -70,7 +70,6 @@ public class User{
 	@Size(min = 6)
 	private String password;
 	
-	
 	@OneToOne
 	private Token token;
 
