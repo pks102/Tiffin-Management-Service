@@ -21,7 +21,7 @@ public class CartController {
 	@PreAuthorize("hasRole('ROLE_customer')")
 	@GetMapping("/addToCart/{vendorItemId}/{quantity}") // add items to cart for customer
 	public ResponseEntity<?> addToCart(@PathVariable("vendorItemId") int vendorItemId,
-			@PathVariable("quantity") int quantity, HttpServletRequest request) {
+			@PathVariable("quantity") long quantity, HttpServletRequest request) {
 		return cartService.addToCartImpl(vendorItemId, quantity, request);
 	}
 

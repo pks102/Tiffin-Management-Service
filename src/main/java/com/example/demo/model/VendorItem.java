@@ -30,7 +30,7 @@ public class VendorItem {
 	}
 	private String itemName;
     
-    private BigDecimal price;
+    private double price;
     
 	public int getVendorItemId() {
 		return vendorItemId;
@@ -54,10 +54,10 @@ public class VendorItem {
 	public void setItemName(String itemName) {
 		this.itemName = itemName;
 	}
-	public BigDecimal getPrice() {
+	public double getPrice() {
 		return price;
 	}
-	public void setPrice(BigDecimal price) {
+	public void setPrice(double price) {
 		this.price = price;
 	}
 }

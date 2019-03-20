@@ -25,7 +25,7 @@ public class Cart {
 	@JoinColumn(name = "vendorItemId")
 	private VendorItem vendorItem;
 
-	private int quantity;
+	private double quantity;
 	
 	private String orderStatus;
 	
@@ -37,12 +37,12 @@ public class Cart {
 		this.orderStatus = orderStatus;
 	}
 
-	public int getQuantity() {
+	public double getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(int quantity) {
-		this.quantity = quantity;
+	public void setQuantity(double quantity2) {
+		this.quantity = quantity2;
 	}
 	
 	@Override

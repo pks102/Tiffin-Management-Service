@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +30,7 @@ public class CartService {
 	@Autowired
 	AddToCartRepository cartRepository;
 
-	public ResponseEntity<?> addToCartImpl(int vendorItemId, int quantity, HttpServletRequest request) {
+	public ResponseEntity<?> addToCartImpl(int vendorItemId, long quantity, HttpServletRequest request) {
 		String replaceToken = request.getHeader("Authorization");
 		String Token = replaceToken.replace("Bearer ", "");
 		String username = jwtProvider.getUserNameFromJwtToken(Token);
@@ -55,7 +56,18 @@ public class CartService {
 		User customer = userRepository.findByUserName(username);
 		if (!cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(), "pending").isEmpty()) {
 			List<Cart> cart = cartRepository.findByUserUserIdAndOrderStatus(customer.getUserId(), "pending");
-			return new ResponseEntity(new Response("200", "List of Cart", cart), HttpStatus.OK);
+			
+			double totalAmount=0;
+			
+			for(Cart ls:cart) {
+				double price=0;
+				double quantity=1;
+			quantity=quantity * (ls.getQuantity());
+			price=price+ls.getVendorItem().getPrice();
+			totalAmount= totalAmount+(price*quantity);
+				
+			}
+			return new ResponseEntity(new Response("200","Total amount to be paid :"+totalAmount, cart), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(new Response("400", "Enter valid Details"), HttpStatus.BAD_REQUEST);
 		}
