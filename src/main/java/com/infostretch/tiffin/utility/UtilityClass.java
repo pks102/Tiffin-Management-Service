@@ -8,18 +8,18 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.infostretch.tiffin.dto.UserDTO;
+import com.infostretch.tiffin.model.Constants;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.model.UserType;
 import com.infostretch.tiffin.repository.UserRepository;
 import com.infostretch.tiffin.repository.VendorItemRepository;
 import com.infostretch.tiffin.security.JwtProvider;
-import com.infostretch.tiffin.service.Constants;
 
 @Component
 public class UtilityClass {
@@ -34,10 +34,10 @@ public class UtilityClass {
 	@Autowired
 	VendorItemRepository vendorItemRepository;
 
-	public ResponseEntity<User> setUserData(UserDTO newUser, HttpServletRequest request) {
+	public Response<User> setUserData(UserDTO newUser, HttpServletRequest request) {
 		String userName = forToken(request);
 		Optional<User> user1 = userRepository.findByUserName(userName);
-		if (user1.isPresent()) {
+		if (user1.isPresent() && newUser!=null) {
 			User oldUser = user1.get();
 			oldUser.setUserName(newUser.getUserName());
 			oldUser.setEmailId(newUser.getEmailId());
@@ -46,9 +46,9 @@ public class UtilityClass {
 			oldUser.setAddress(newUser.getAddress());
 			oldUser.setPassword(encoder.encode(newUser.getPassword()));
 			userRepository.save(oldUser);
-			return new ResponseEntity<>(oldUser, HttpStatus.OK);
+			return new Response<>(oldUser,"User updated",HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Cannot Update user",HttpStatus.NOT_FOUND);
 		}
 	}
 

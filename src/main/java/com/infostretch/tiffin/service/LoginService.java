@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.infostretch.tiffin.dto.LoginForm;
 import com.infostretch.tiffin.dto.UserDTO;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.Token;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.model.UserType;
@@ -43,7 +43,7 @@ public class LoginService {
 	@Autowired
 	UtilityClass utilityclass;
 
-	public ResponseEntity<User> signInUserImpl(LoginForm loginRequest) {
+	public Response<User> signInUserImpl(LoginForm loginRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword()));
@@ -65,9 +65,9 @@ public class LoginService {
 					tokenRepo.save(token1);
 					user1.setToken(token1);
 					userRepository.save(user1);
-					return new ResponseEntity<>(user1, HttpStatus.OK);
+					return new Response<>(user1,"User logged In successfully" ,HttpStatus.OK);
 				} else {
-					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+					return new Response<>("Invalid Details",HttpStatus.BAD_REQUEST);
 
 				}
 			} else {
@@ -77,21 +77,21 @@ public class LoginService {
 				tokenRepo.save(token);
 				user1.setToken(token);
 				userRepository.save(user1);
-				return new ResponseEntity<>(HttpStatus.OK);
+				return new Response<>(user1,"User logged In successfully",HttpStatus.OK);
 			}
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Invalid Details",HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	public ResponseEntity<User> registerUserImpl(UserDTO signUpRequest, String userTypeName) {
+	public Response<User> registerUserImpl(UserDTO signUpRequest, String userTypeName) {
 		if (userTypeName.equalsIgnoreCase("customer")) {
 			UserType userType = userTypeRepository.findByUserTypeName("customer");
 			userType.setUserTypeId(userType.getUserTypeId());
 			List<UserType> userTypes = new ArrayList<>();
 			userTypes.add(userType);
 			User user = utilityclass.registerUser(userTypes, signUpRequest);
-			return new ResponseEntity<>(user, HttpStatus.OK);
+			return new Response<>(user,"Customer register successfully" ,HttpStatus.OK);
 
 		} else if (userTypeName.equalsIgnoreCase("vendor")) {
 			UserType userType = userTypeRepository.findByUserTypeName("vendor");
@@ -109,9 +109,9 @@ public class LoginService {
 			user.setAddress(signUpRequest.getAddress());
 
 			userRepository.save(user);
-			return new ResponseEntity<>(user, HttpStatus.OK);
+			return new Response<>(user,"Vendor registered successfully" ,HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Something went wrong Try Again!",HttpStatus.BAD_REQUEST);
 		}
 	}
 }

@@ -7,10 +7,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.infostretch.tiffin.model.Cart;
+import com.infostretch.tiffin.model.Constants;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.model.VendorItem;
 import com.infostretch.tiffin.repository.AddToCartRepository;
@@ -18,6 +19,7 @@ import com.infostretch.tiffin.repository.UserRepository;
 import com.infostretch.tiffin.repository.VendorItemRepository;
 import com.infostretch.tiffin.security.JwtProvider;
 import com.infostretch.tiffin.utility.UtilityClass;
+
 
 @Service
 public class CartService {
@@ -33,7 +35,7 @@ public class CartService {
 	@Autowired
 	UtilityClass utilityClass;
 
-		public ResponseEntity<Cart> addToCartImpl(int vendorItemId, long quantity, HttpServletRequest request) {
+		public Response<Cart> addToCartImpl(int vendorItemId, long quantity, HttpServletRequest request) {
 			
 			String userName = utilityClass.forToken(request);
 			Optional<VendorItem> vendorItem = vendorItemRepository.findById(vendorItemId);
@@ -48,13 +50,13 @@ public class CartService {
 				cart.setQuantity(quantity);
 				cart.setOrderStatus(Constants.PENDING);
 				cartRepository.save(cart);
-				return new ResponseEntity<>(cart, HttpStatus.OK);
+				return new Response<>(cart,"Added to Cart", HttpStatus.OK);
 			} else {
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new Response<>("Item not available Sorry",HttpStatus.BAD_REQUEST);
 			}
 	}
 
-	public ResponseEntity<List<Cart>> viewCartImpl(HttpServletRequest request) {
+	public Response<List<Cart>> viewCartImpl(HttpServletRequest request) {
 		String userName = utilityClass.forToken(request);
 		Optional<User> customer = userRepository.findByUserName(userName);
 		if(customer.isPresent()) {
@@ -71,24 +73,24 @@ public class CartService {
 			totalAmount= totalAmount+(price*quantity);
 				
 			}
-			return new ResponseEntity<>(cart, HttpStatus.OK);
+			return new Response<>(cart,"Cart filled",HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Empty cart",HttpStatus.OK);
 		}}else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Customer not present",HttpStatus.NOT_FOUND);
 		}
 	}
 
-	public ResponseEntity<Cart> deleteCartImpl(int cartId, HttpServletRequest request) {
+	public Response<Cart> deleteCartImpl(int cartId, HttpServletRequest request) {
 		String userName = utilityClass.forToken(request);
 		Optional<Cart> cart1 = cartRepository.findById(cartId);
 		Optional<User> user=userRepository.findByUserName(userName);
 		if (cart1.isPresent() && user.isPresent()) {
 			Cart cart = cart1.get();
 			cartRepository.delete(cart);
-			return new ResponseEntity<>(cart, HttpStatus.OK);
+			return new Response<>(cart,"Item removed successfully",HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
+			return new Response<>("Item not found",HttpStatus.BAD_REQUEST);
 		}
 	}
 }

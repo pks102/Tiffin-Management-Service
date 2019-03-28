@@ -7,11 +7,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.infostretch.tiffin.dto.UserDTO;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.repository.UserRepository;
 import com.infostretch.tiffin.repository.VendorItemRepository;
@@ -31,19 +31,19 @@ public class VendorService {
 	@Autowired
 	UtilityClass utilityClass;
 
-	public ResponseEntity<User> updateImpl(UserDTO newUser, HttpServletRequest request) {
+	public Response<User> updateImpl(UserDTO newUser, HttpServletRequest request) {
 
 		
 		return utilityClass.setUserData(newUser, request);
 	}
 
-	public ResponseEntity<List<User>> listOfVendors() {
+	public Response<List<User>> listOfVendors() {
 
 		Optional<List<User>> vendors = userRepository.findByUserTypeUserTypeId(2);
 		if (vendors.isPresent()) {
-			return new ResponseEntity<>(vendors.get(), HttpStatus.OK);
+			return new Response<>(vendors.get(),"Vendor list", HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("No Vendor available",HttpStatus.NOT_FOUND);
 		}
 
 	}

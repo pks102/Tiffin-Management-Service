@@ -1,4 +1,4 @@
-package com.infostretch.tiffin.service;
+package com.infostretch.tiffin.model;
 
 public class Constants {
 	public static final String BEARER="Bearer ";

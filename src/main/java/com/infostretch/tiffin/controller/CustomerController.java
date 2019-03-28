@@ -3,13 +3,13 @@ package com.infostretch.tiffin.controller;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.infostretch.tiffin.dto.UserDTO;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.service.CustomerService;
 
@@ -20,7 +20,7 @@ public class CustomerController {
 
 	@PreAuthorize("hasRole('ROLE_customer')")
 	@PostMapping("/customer")
-	public ResponseEntity<User> editCustomer(@RequestBody UserDTO user, HttpServletRequest request) {
+	public Response<User> editCustomer(@RequestBody UserDTO user, HttpServletRequest request) {
 
 		return customerService.updateImpl(user, request);
 

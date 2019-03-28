@@ -8,11 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.infostretch.tiffin.model.Cart;
+import com.infostretch.tiffin.model.Constants;
 import com.infostretch.tiffin.model.Order;
+import com.infostretch.tiffin.model.Response;
 import com.infostretch.tiffin.model.User;
 import com.infostretch.tiffin.repository.AddToCartRepository;
 import com.infostretch.tiffin.repository.OrderRepository;
@@ -33,7 +34,7 @@ public class OrderService {
 	AddToCartRepository cartRepository;
 	@Autowired
 	UtilityClass utilityClass;
-	public ResponseEntity<Order> orderImpl(String paymentMode, HttpServletRequest request) {
+	public Response<Order> orderImpl(String paymentMode, HttpServletRequest request) {
 		String userName = utilityClass.forToken(request);
 		Optional<User> customer1 = userRepository.findByUserName(userName);
 		if (customer1.isPresent()) {
@@ -49,12 +50,12 @@ public class OrderService {
 				order.setUser(customer);
 				order.setPaymentMode(paymentMode);
 				orderRepository.save(order);
-				return new ResponseEntity<>(HttpStatus.OK);
+				return new Response<>(order,"Order Placed",HttpStatus.OK);
 			} else {
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new Response<>("No items available in cart",HttpStatus.BAD_REQUEST);
 			}
 		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return new Response<>("Something went wrong Try Again!",HttpStatus.BAD_REQUEST);
 		}
 
 	}
